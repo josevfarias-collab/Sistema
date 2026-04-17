@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane prefHeight="400.0" prefWidth="600.0"
+           xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="application.view.CadastroUsuarioController"
+           style="-fx-background-color: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);">
+
+    <children>
+
+        <!-- CARD CENTRAL -->
+        <VBox alignment="CENTER" spacing="15" maxWidth="320"
+              style="-fx-background-color: rgba(255,255,255,0.08);
+                     -fx-padding:20;
+                     -fx-background-radius:12;">
+
+            <Label text="Cadastro de Usuário"
+                   style="-fx-text-fill:white; -fx-font-weight:bold;">
+                <font>
+                    <Font size="20"/>
+                </font>
+            </Label>
+
+            <!-- NOME -->
+            <VBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Nome" style="-fx-text-fill:#dddddd;"/>
+                <TextField fx:id="txtNome" promptText="Digite o nome"
+                           prefWidth="250"
+                           style="-fx-background-radius:6;"/>
+            </VBox>
+
+            <!-- LOGIN -->
+            <VBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Login" style="-fx-text-fill:#dddddd;"/>
+                <TextField fx:id="txtLogin" promptText="Digite o login"
+                           prefWidth="250"
+                           style="-fx-background-radius:6;"/>
+            </VBox>
+
+            <!-- SENHA -->
+            <VBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Senha" style="-fx-text-fill:#dddddd;"/>
+                <PasswordField fx:id="txtSenha" promptText="Digite a senha"
+                               prefWidth="250"
+                               style="-fx-background-radius:6;"/>
+            </VBox>
+
+            <!-- GRUPO DOS TIPOS -->
+            <fx:define>
+                <ToggleGroup fx:id="grupoTipo"/>
+            </fx:define>
+
+            <VBox spacing="5" alignment="CENTER_LEFT">
+                <Label text="Tipo de Usuário" style="-fx-text-fill:#dddddd;"/>
+
+                <HBox spacing="15">
+                    <RadioButton fx:id="rbVendedor" text="Vendedor" toggleGroup="$grupoTipo"
+                                 style="-fx-text-fill:white;"/>
+                    <RadioButton fx:id="rbGerente" text="Gerente" toggleGroup="$grupoTipo"
+                                 style="-fx-text-fill:white;"/>
+                    <RadioButton fx:id="rbEstoquista" text="Estoquista" toggleGroup="$grupoTipo"
+                                 style="-fx-text-fill:white;"/>
+                </HBox>
+            </VBox>
+
+            <!-- BOTÃO -->
+            <Button text="Salvar"
+                    onAction="#salvar"
+                    style="-fx-background-color:#4CAF50;
+                           -fx-text-fill:white;
+                           -fx-font-weight:bold;
+                           -fx-background-radius:8;
+                           -fx-padding:8 25;"/>
+
+        </VBox>
+
+    </children>
+</StackPane>

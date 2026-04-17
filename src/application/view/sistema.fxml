@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="application.view.SistemaController">
+
+    <!-- MENU LATERAL -->
+    <left>
+        <VBox spacing="15" prefWidth="220"
+              style="-fx-background-color: #1c1c1c; -fx-padding: 15;">
+
+            <Label text="💼 Sistema"
+                   style="-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;"/>
+
+            <Separator/>
+
+            <Button text="📊 Dashboard" onAction="#abrirDashboard"
+                    style="-fx-background-color:#2c2c2c; -fx-text-fill:white;"/>
+
+            <Button text="👤 Clientes" onAction="#abrirCliente"
+                    style="-fx-background-color:#2c2c2c; -fx-text-fill:white;"/>
+
+            <Button text="📦 Produtos" onAction="#AbrirCadastroProduto"
+                    style="-fx-background-color:#2c2c2c; -fx-text-fill:white;"/>
+
+            <Button text="📦 Estoque" onAction="#AbrirProcessarEstoque"
+                    style="-fx-background-color:#2c2c2c; -fx-text-fill:white;"/>
+
+            <Button text="👨‍💼 Usuários" onAction="#abrirCadastroUsuario"
+                    style="-fx-background-color:#2c2c2c; -fx-text-fill:white;"/>
+
+            <Separator/>
+
+            <Button text="🚪 Sair" onAction="#sair"
+                    style="-fx-background-color:#f44336; -fx-text-fill:white;"/>
+
+        </VBox>
+    </left>
+
+    <!-- ÁREA PRINCIPAL -->
+    <center>
+        <StackPane fx:id="painelPrincipal"
+                   style="-fx-background-color: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);"/>
+    </center>
+
+</BorderPane>

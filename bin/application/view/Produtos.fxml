@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="520.0" prefWidth="900.0" style="-fx-background-color: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.view.CadastroDeProduto">
+
+   <children>
+
+      <Label layoutX="260.0" layoutY="10.0" style="-fx-text-fill: #ffffff; -fx-font-weight: bold;" text="📦 CADASTRO DE PRODUTO">
+         <font>
+            <Font size="20.0" />
+         </font>
+      </Label>
+
+      <TextField fx:id="txtBuscar" layoutX="90.0" layoutY="60.0" onAction="#Pesquisar" prefWidth="250.0" promptText="Digite o nome para buscar..." />
+      <Button layoutX="350.0" layoutY="60.0" onAction="#Pesquisar" style="-fx-cursor: hand;" text="Buscar" />
+
+      <Label layoutX="90.0" layoutY="100.0" style="-fx-text-fill:white;" text="ID" />
+      <TextField fx:id="txtId" editable="false" layoutX="90.0" layoutY="120.0" prefWidth="80.0" style="-fx-background-color: #e0e0e0;" />
+
+      <Label layoutX="90.0" layoutY="150.0" style="-fx-text-fill:white;" text="Nome do Produto" />
+      <TextField fx:id="txtNome" layoutX="90.0" layoutY="170.0" prefWidth="180.0" />
+
+      <Label layoutX="300.0" layoutY="150.0" style="-fx-text-fill:white;" text="Preço de Custo" />
+      <TextField fx:id="txtPrecoCusto" layoutX="300.0" layoutY="170.0" prefWidth="120.0" promptText="0.00" />
+
+      <Label layoutX="440.0" layoutY="150.0" style="-fx-text-fill:white;" text="Margem (%)" />
+      <TextField fx:id="txtMargemLucro" layoutX="440.0" layoutY="170.0" prefWidth="120.0" promptText="Ex: 30" />
+
+      <Label layoutX="580.0" layoutY="150.0" style="-fx-text-fill:white;" text="Preço de Venda" />
+      <TextField fx:id="txtPrecoVenda" layoutX="580.0" layoutY="170.0" prefWidth="120.0" promptText="Automático" />
+
+      <Label layoutX="90.0" layoutY="200.0" style="-fx-text-fill:white;" text="Descrição" />
+      <TextField fx:id="txtDescricao" layoutX="90.0" layoutY="220.0" prefWidth="180.0" />
+
+      <Label layoutX="300.0" layoutY="200.0" style="-fx-text-fill:white;" text="Qtd Atual" />
+      <TextField fx:id="txtQuantidade" disable="true" layoutX="300.0" layoutY="220.0" prefWidth="120.0" style="-fx-opacity: 0.8;" />
+
+      <Label layoutX="440.0" layoutY="200.0" style="-fx-text-fill:white;" text="Alerta Estoque Mín." />
+      <TextField fx:id="txtEstoqueMinimo" layoutX="440.0" layoutY="220.0" prefWidth="120.0" promptText="Ex: 5" />
+
+      <Label layoutX="90.0" layoutY="250.0" style="-fx-text-fill:white;" text="Categoria" />
+      <ComboBox fx:id="cbCategoria" layoutX="90.0" layoutY="270.0" prefWidth="180.0" promptText="Selecione..." />
+
+      <Label layoutX="300.0" layoutY="250.0" style="-fx-text-fill:white;" text="Código de Barras (Somente números)" />
+      <TextField fx:id="txtCodigoBarras" layoutX="300.0" layoutY="270.0" prefWidth="260.0" promptText="Digite apenas os números" />
+
+      <Button layoutX="260.0" layoutY="320.0" onAction="#salvar" style="-fx-background-color:#4CAF50; -fx-text-fill:white; -fx-font-weight: bold; -fx-cursor: hand;" text="💾 Salvar Produto" />
+
+      <Button layoutX="400.0" layoutY="320.0" onAction="#Excluir" style="-fx-background-color:#f44336; -fx-text-fill:white; -fx-font-weight: bold; -fx-cursor: hand;" text="🗑️ Excluir" />
+
+      <TableView fx:id="tableProdutos" layoutY="363.0" prefHeight="250.0" prefWidth="900.0">
+   <columns>
+      <TableColumn fx:id="colID" prefWidth="60" text="ID" />
+      <TableColumn fx:id="colNome" prefWidth="150" text="Nome" />
+      <TableColumn fx:id="colDescricao" prefWidth="180" text="Descrição" />
+      <TableColumn fx:id="colCategoria" prefWidth="120" text="Categoria" />
+      <TableColumn fx:id="colPrecoCusto" prefWidth="100" text="Custo (R$)" />
+      <TableColumn fx:id="colPrecoVenda" prefWidth="100" text="Venda (R$)" />
+      <TableColumn fx:id="colQtd" prefWidth="80" text="Qtd" />
+      <TableColumn fx:id="colCodigoBarras" prefWidth="210" text="Cód. Barras" />
+   </columns>
+</TableView>
+
+   </children>
+</AnchorPane>
