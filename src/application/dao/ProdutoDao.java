@@ -182,7 +182,7 @@ public class ProdutoDao {
 
             psMov.executeUpdate();
 
-            conn.commit(); // 🔥 CONFIRMA
+            conn.commit(); 
 
         } catch (Exception e) {
             e.printStackTrace();

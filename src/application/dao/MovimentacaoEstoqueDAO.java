@@ -26,7 +26,7 @@ public class MovimentacaoEstoqueDAO {
                 "u.nome as usuario " + // 🔥 AQUI
                 "FROM movimentacao_estoque m " +
                 "JOIN produto p ON p.id = m.produto_id " +
-                "LEFT JOIN usuario u ON u.id = m.usuario_id " + // 🔥 JOIN
+                "LEFT JOIN usuario u ON u.id = m.usuario_id " + 
                 "WHERE (? = 0 OR p.id = ?) " +
                 "AND DATE(m.data_hora) BETWEEN ? AND ?";
 
@@ -49,7 +49,7 @@ public class MovimentacaoEstoqueDAO {
                         rs.getString("nome"),
                         rs.getInt("id"),
                         rs.getInt("quantidade"),
-                        rs.getString("usuario") // 🔥 AQUI
+                        rs.getString("usuario") 
                 ));
             }
 

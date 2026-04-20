@@ -26,7 +26,7 @@ public class HistoricoController implements Initializable {
     @FXML private TableColumn<MovimentacaoEstoqueModel, String> colTipo;
     @FXML private TableColumn<MovimentacaoEstoqueModel, Integer> colQuantidade;
     @FXML private TableColumn<MovimentacaoEstoqueModel, String> colData;
-    @FXML private TableColumn<MovimentacaoEstoqueModel, String> colUsuario; // 🔥 AGORA EXISTE
+    @FXML private TableColumn<MovimentacaoEstoqueModel, String> colUsuario; 
 
     private ObservableList<MovimentacaoEstoqueModel> lista = FXCollections.observableArrayList();
 
@@ -39,7 +39,7 @@ public class HistoricoController implements Initializable {
         colTipo.setCellValueFactory(new PropertyValueFactory<>("tipo"));
         colQuantidade.setCellValueFactory(new PropertyValueFactory<>("quantidade"));
         colData.setCellValueFactory(new PropertyValueFactory<>("data"));
-        colUsuario.setCellValueFactory(new PropertyValueFactory<>("usuario")); // 🔥 AGORA FUNCIONA
+        colUsuario.setCellValueFactory(new PropertyValueFactory<>("usuario"));
 
         tableHistorico.setItems(lista);
 
