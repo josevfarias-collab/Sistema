@@ -24,13 +24,12 @@ public class ClienteDAO {
 
             if (cliente.getId() > 0) {
 
-                // 🔄 UPDATE
                 String sql = "UPDATE cliente SET nome=?, documento=?, email=?, telefone=?, status=? WHERE id=?";
 
                 PreparedStatement stmt = conn.prepareStatement(sql);
 
                 stmt.setString(1, cliente.getNome());
-                stmt.setString(2, cliente.getDocumento()); // 🔥 corrigido
+                stmt.setString(2, cliente.getDocumento());
                 stmt.setString(3, cliente.getEmail());
                 stmt.setString(4, cliente.getTelefone());
                 stmt.setString(5, cliente.getStatus());
@@ -40,13 +39,12 @@ public class ClienteDAO {
 
             } else {
 
-                // 🆕 INSERT
                 String sql = "INSERT INTO cliente (nome, documento, email, telefone, status) VALUES (?, ?, ?, ?, ?)";
 
                 PreparedStatement stmt = conn.prepareStatement(sql);
 
                 stmt.setString(1, cliente.getNome());
-                stmt.setString(2, cliente.getDocumento()); // 🔥 corrigido
+                stmt.setString(2, cliente.getDocumento());
                 stmt.setString(3, cliente.getEmail());
                 stmt.setString(4, cliente.getTelefone());
                 stmt.setString(5, cliente.getStatus());
@@ -77,7 +75,7 @@ public class ClienteDAO {
 
                 cliente.setId(rs.getInt("id"));
                 cliente.setNome(rs.getString("nome"));
-                cliente.setDocumento(rs.getString("documento")); // 🔥 corrigido
+                cliente.setDocumento(rs.getString("documento"));
                 cliente.setEmail(rs.getString("email"));
                 cliente.setTelefone(rs.getString("telefone"));
                 cliente.setStatus(rs.getString("status"));
@@ -117,7 +115,7 @@ public class ClienteDAO {
 
                 cliente.setId(rs.getInt("id"));
                 cliente.setNome(rs.getString("nome"));
-                cliente.setDocumento(rs.getString("documento")); // 🔥 corrigido
+                cliente.setDocumento(rs.getString("documento"));
                 cliente.setEmail(rs.getString("email"));
                 cliente.setTelefone(rs.getString("telefone"));
                 cliente.setStatus(rs.getString("status"));
@@ -130,6 +128,39 @@ public class ClienteDAO {
         }
 
         return lista;
+    }
+
+    // 🔥 NOVO — BUSCAR POR NOME (USADO NA VENDA)
+    public ClienteModel buscarPorNome(String nome) {
+
+        String sql = "SELECT * FROM cliente WHERE nome LIKE ? LIMIT 1";
+
+        try {
+
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setString(1, "%" + nome + "%");
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+
+                ClienteModel cliente = new ClienteModel();
+
+                cliente.setId(rs.getInt("id"));
+                cliente.setNome(rs.getString("nome"));
+                cliente.setDocumento(rs.getString("documento"));
+                cliente.setEmail(rs.getString("email"));
+                cliente.setTelefone(rs.getString("telefone"));
+                cliente.setStatus(rs.getString("status"));
+
+                return cliente;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     // ❗ VERIFICAR DOCUMENTO DUPLICADO

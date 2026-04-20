@@ -32,6 +32,10 @@
             <Button text="👨‍💼 Usuários" onAction="#abrirCadastroUsuario"
                     style="-fx-background-color:#2c2c2c; -fx-text-fill:white;"/>
 
+            <!-- 🔥 BOTÃO VENDAS COM EMOJI -->
+            <Button text="💰 Vendas" onAction="#abrirVendas"
+                    style="-fx-background-color:#2c2c2c; -fx-text-fill:white;"/>
+
             <Separator/>
 
             <Button text="🚪 Sair" onAction="#sair"

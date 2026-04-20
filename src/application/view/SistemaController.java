@@ -3,16 +3,14 @@ package application.view;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 
 public class SistemaController {
 
     @FXML
     private StackPane painelPrincipal;
 
-    // 🔥 MÉTODO PARA CARREGAR TELAS DENTRO DO PAINEL
+    // 🔥 MÉTODO PARA CARREGAR TELAS
     private void carregarTela(String caminho) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(caminho));
@@ -50,12 +48,16 @@ public class SistemaController {
     @FXML
     public void abrirCadastroUsuario() {
         carregarTela("/application/view/cadastro_usuario.fxml");
-        
     }
-    
+
     @FXML
     public void abrirMovimentacao() {
         carregarTela("/application/view/movimentacao.fxml");
+    }
+
+    @FXML
+    public void abrirVendas() {
+        carregarTela("/application/view/Venda.fxml");
     }
 
     @FXML

@@ -152,6 +152,7 @@ public class ProdutoDao {
 
             if (tipo.equalsIgnoreCase("SAIDA")) {
 
+                // ✅ REGRA RN02 - BLOQUEIO SEM ESTOQUE
                 if (estoqueAtual < quantidade) {
                     throw new RuntimeException("Estoque insuficiente!");
                 }
@@ -178,7 +179,7 @@ public class ProdutoDao {
             psMov.setInt(2, usuarioId);
             psMov.setInt(3, quantidade);
             psMov.setString(4, tipo.toUpperCase());
-            
+
             psMov.executeUpdate();
 
             conn.commit(); // 🔥 CONFIRMA
