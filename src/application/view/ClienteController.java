@@ -49,11 +49,18 @@ public class ClienteController {
         colStatus.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("status"));
 
         colVendaId.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("id"));
-        colData.setCellValueFactory(cell ->
-                new javafx.beans.property.SimpleStringProperty(
-                        cell.getValue().getData().toString()
-                )
-        );
+
+        // ✅ CORREÇÃO AQUI (evita erro de NULL)
+        colData.setCellValueFactory(cell -> {
+            if (cell.getValue().getData() != null) {
+                return new javafx.beans.property.SimpleStringProperty(
+                        cell.getValue().getData().toLocalDate().toString()
+                );
+            } else {
+                return new javafx.beans.property.SimpleStringProperty("-");
+            }
+        });
+
         colTotal.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("total"));
 
         carregarClientes();
@@ -74,6 +81,7 @@ public class ClienteController {
 
                 VendaDAO vendaDAO = new VendaDAO();
 
+                // ✅ HISTÓRICO SEM ERRO
                 tableHistorico.setItems(
                         FXCollections.observableArrayList(
                                 vendaDAO.buscarPorCliente(cliente.getId())
@@ -93,7 +101,6 @@ public class ClienteController {
     private boolean documentoValido(String doc) {
 
         doc = doc.replaceAll("[^0-9]", "");
-
         return doc.length() == 11 || doc.length() == 14;
     }
 

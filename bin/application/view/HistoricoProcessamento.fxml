@@ -42,7 +42,7 @@
         <TableColumn fx:id="colNome" text="Nome" prefWidth="150"/>
         <TableColumn fx:id="colTipo" text="Tipo" prefWidth="100"/>
         <TableColumn fx:id="colQuantidade" text="Qtd" prefWidth="80"/>
-        <TableColumn fx:id="colUsuario" text="Usuário" prefWidth="120"/> <!-- 🔥 NOVO -->
+        <TableColumn fx:id="colUsuario" text="Usuário" prefWidth="120"/>
     </columns>
 </TableView>
 
