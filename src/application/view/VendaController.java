@@ -182,67 +182,96 @@ public class VendaController {
     // =========================
     @FXML
     public void finalizarVenda() {
-
         try {
-
+            // 1. Validações Básicas
             if (txtCliente.getText().trim().isEmpty()) {
                 new Alert(Alert.AlertType.WARNING, "Informe o cliente").show();
                 return;
             }
-
             if (carrinho.isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Carrinho vazio").show();
+                new Alert(Alert.AlertType.WARNING, "O carrinho está vazio!").show();
                 return;
             }
 
-            if ("PIX".equals(cbPagamento.getValue()) && !pixPago) {
-                new Alert(Alert.AlertType.WARNING, "Confirme o pagamento PIX!");
-                return;
-            }
-
-            ClienteDAO clienteDAO = new ClienteDAO();
-            ClienteModel cliente = clienteDAO.buscarPorNome(txtCliente.getText());
-
-            if (cliente == null) {
-                new Alert(Alert.AlertType.ERROR, "Cliente não encontrado").show();
+            String formaPagamento = cbPagamento.getValue();
+            if (formaPagamento == null) {
+                new Alert(Alert.AlertType.WARNING, "Selecione uma forma de pagamento!").show();
                 return;
             }
 
             double totalVenda = calcularTotal();
-            double pix = Double.parseDouble(txtPix.getText());
+            double valorRecebido = 0;
 
-            double troco = pix - totalVenda;
-            lblTroco.setText("Troco: R$ " + String.format("%.2f", troco));
+            // 2. Reconhecimento Dinâmico do Valor Pago
+            switch (formaPagamento) {
+                case "DINHEIRO":
+                    if (txtDinheiro.getText().trim().isEmpty()) {
+                        new Alert(Alert.AlertType.WARNING, "Digite o valor entregue pelo cliente!").show();
+                        return;
+                    }
+                    valorRecebido = Double.parseDouble(txtDinheiro.getText().replace(",", "."));
+                    break;
 
-            ProdutoDao produtoDao = new ProdutoDao();
+                case "PIX":
+                    if (!pixPago) {
+                        new Alert(Alert.AlertType.WARNING, "Você precisa clicar em 'Confirmar Pix' primeiro!").show();
+                        return;
+                    }
+                    // Tenta ler o valor do campo Pix, se estiver vazio ou for o padrão, usa o total
+                    String valPix = txtPix.getText().trim();
+                    valorRecebido = valPix.isEmpty() ? totalVenda : Double.parseDouble(valPix.replace(",", "."));
+                    break;
 
-            for (ItemCarrinho item : carrinho) {
-                produtoDao.processarEstoque(
-                        item.getProdutoId(),
-                        item.getQuantidade(),
-                        "SAIDA",
-                        usuarioId
-                );
+                case "CARTAO":
+                    String valCartao = txtCartao.getText().trim();
+                    valorRecebido = valCartao.isEmpty() ? totalVenda : Double.parseDouble(valCartao.replace(",", "."));
+                    break;
             }
 
+            // 3. Verificação de Segurança (Valor suficiente?)
+            if (valorRecebido < totalVenda) {
+                new Alert(Alert.AlertType.ERROR, "O valor pago (R$ " + valorRecebido + ") é menor que o total (R$ " + totalVenda + ")!").show();
+                return;
+            }
+
+            // 4. Cálculo do Troco
+            double troco = valorRecebido - totalVenda;
+            lblTroco.setText("Troco: R$ " + String.format("%.2f", troco));
+
+            // 5. Integração com Banco de Dados (DAOs)
+            ClienteDAO clienteDAO = new ClienteDAO();
+            ClienteModel cliente = clienteDAO.buscarPorNome(txtCliente.getText().trim());
+
+            if (cliente == null) {
+                new Alert(Alert.AlertType.ERROR, "Cliente não cadastrado no sistema!").show();
+                return;
+            }
+
+            // Baixa no Estoque
+            ProdutoDao produtoDao = new ProdutoDao();
+            for (ItemCarrinho item : carrinho) {
+                produtoDao.processarEstoque(item.getProdutoId(), item.getQuantidade(), "SAIDA", usuarioId);
+            }
+
+            // Salva a Venda
             VendaModel venda = new VendaModel();
             venda.setClienteId(cliente.getId());
             venda.setTotal(totalVenda);
 
             int vendaId = vendaDAO.salvarRetornandoId(venda);
-
             vendaDAO.salvarItens(vendaId, carrinho);
-            vendaDAO.salvarPagamento(vendaId, "PIX", pix);
+            vendaDAO.salvarPagamento(vendaId, formaPagamento, valorRecebido);
 
-            exibirCupom(cliente.getNome(), totalVenda, pix, troco);
-
+            // 6. Finalização Visual
+            exibirCupom(cliente.getNome(), totalVenda, valorRecebido, troco);
             limparTelaVenda();
 
+        } catch (NumberFormatException e) {
+            new Alert(Alert.AlertType.ERROR, "Erro: Digite apenas números e pontos nos campos de valor!").show();
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
+            new Alert(Alert.AlertType.ERROR, "Erro inesperado: " + e.getMessage()).show();
         }
     }
-
     // =========================
     // CANCELAR VENDA (ADICIONADO)
     // =========================
