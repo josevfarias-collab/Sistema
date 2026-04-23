@@ -1,13 +1,15 @@
 package application.dao;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 import application.Conexao;
-import application.model.VendaModel;
 import application.model.ItemCarrinho;
-import application.dao.ProdutoDao;// ✅ IMPORT NECESSÁRIO
+import application.model.VendaModel;
 
 public class VendaDAO {
 

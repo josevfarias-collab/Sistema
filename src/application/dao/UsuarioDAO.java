@@ -81,4 +81,25 @@ public class UsuarioDAO {
 
         return false;
     }
+
+    // 🔒 VALIDAR GERENTE (ADICIONADO)
+    public boolean validarGerente(String senha) {
+
+        String sql = "SELECT * FROM usuario WHERE senha = ? AND tipo = 'GERENTE'";
+
+        try (Connection conn = Conexao.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, senha);
+
+            ResultSet rs = ps.executeQuery();
+
+            return rs.next();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

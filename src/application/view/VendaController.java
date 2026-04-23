@@ -5,12 +5,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import application.dao.ProdutoDao;
+import application.dao.UsuarioDAO;
 import application.dao.VendaDAO;
-import application.dao.ClienteDAO;
 import application.model.VendaModel;
 import application.model.ItemCarrinho;
 import application.model.ProdutoModel;
-import application.model.ClienteModel;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,27 +24,22 @@ public class VendaController {
     @FXML private TextField txtDesconto, txtDinheiro, txtCartao, txtPix, txtVendaId;
     @FXML private TextField txtProduto, txtQuantidade, txtCliente;
     @FXML private Label lblTroco;
-
     @FXML private TableView<ItemCarrinho> tableCarrinho;
     @FXML private TableColumn<ItemCarrinho, String> colNome;
     @FXML private TableColumn<ItemCarrinho, Integer> colQtd;
     @FXML private TableColumn<ItemCarrinho, Double> colPreco;
-
     @FXML private ComboBox<String> cbPagamento;
     @FXML private VBox boxCartao, boxPix, boxDinheiro;
     @FXML private TextField txtNumeroCartao, txtNomeCartao, txtValidade, txtCVV;
     @FXML private ImageView imgPix;
 
     private boolean pixPago = false;
-
     private ObservableList<ItemCarrinho> carrinho = FXCollections.observableArrayList();
-
     private int usuarioId = 1;
     private VendaDAO vendaDAO = new VendaDAO();
 
     @FXML
     public void initialize() {
-
         tableCarrinho.setItems(carrinho);
 
         colNome.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNome()));
@@ -55,9 +49,7 @@ public class VendaController {
         cbPagamento.getItems().addAll("DINHEIRO", "CARTAO", "PIX");
 
         cbPagamento.setOnAction(e -> {
-
             String tipo = cbPagamento.getValue();
-
             boxDinheiro.setVisible(false);
             boxCartao.setVisible(false);
             boxPix.setVisible(false);
@@ -65,68 +57,59 @@ public class VendaController {
             if (tipo == null) return;
 
             switch (tipo) {
-
                 case "DINHEIRO":
                     boxDinheiro.setVisible(true);
                     break;
-
                 case "CARTAO":
                     boxCartao.setVisible(true);
                     break;
-
                 case "PIX":
                     boxPix.setVisible(true);
                     gerarQrCodePix();
                     break;
             }
         });
+
+        // Atualizar troco em tempo real
+        txtDinheiro.textProperty().addListener((obs, oldVal, newVal) -> atualizarTroco());
+        txtDesconto.textProperty().addListener((obs, oldVal, newVal) -> atualizarTroco());
     }
 
-    // =========================
-    // GERAR QR CODE PIX
-    // =========================
     private void gerarQrCodePix() {
         double total = calcularTotal();
         if (total <= 0) return;
 
-        // .replace(",", ".") é vital, mas o trim() remove espaços fantasmas
         String valor = String.format("%.2f", total).replace(",", ".").trim();
         txtPix.setText(valor);
 
-        // TESTE: Coloque sua chave sem nenhum espaço, ex: "63999998888" ou "seu@email.com"
-        String chavePix = "SUA_CHAVE_AQUI".trim(); 
-
-        String payload = gerarPayloadPix(chavePix, valor);
+        String chavePix = "SUA_CHAVE_AQUI".trim();
 
         try {
-            // A codificação UTF-8 é necessária para que símbolos não quebrem a URL
-            String url = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data="
-                    + URLEncoder.encode(payload, StandardCharsets.UTF_8);
+            String url = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" +
+                    URLEncoder.encode(chavePix + " | Valor: R$ " + valor, StandardCharsets.UTF_8);
             imgPix.setImage(new Image(url));
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, "Erro ao gerar imagem do QR Code").show();
+            new Alert(Alert.AlertType.ERROR, "Erro ao gerar QR Code").show();
         }
-
         pixPago = false;
     }
 
-    // =========================
-    // CONFIRMAR PIX
-    // =========================
     @FXML
     public void confirmarPix() {
         pixPago = true;
         new Alert(Alert.AlertType.INFORMATION, "Pagamento PIX confirmado!").show();
     }
 
-    // =========================
-    // ADICIONAR PRODUTO
-    // =========================
     @FXML
     public void adicionarProduto() {
         try {
-            String nome = txtProduto.getText();
-            int qtd = Integer.parseInt(txtQuantidade.getText());
+            String nome = txtProduto.getText().trim();
+            int qtd = Integer.parseInt(txtQuantidade.getText().trim());
+
+            if (nome.isEmpty()) {
+                new Alert(Alert.AlertType.ERROR, "Informe o nome do produto").show();
+                return;
+            }
 
             ProdutoDao dao = new ProdutoDao();
             List<ProdutoModel> produtos = dao.listarProduto(nome);
@@ -143,150 +126,129 @@ public class VendaController {
                 return;
             }
 
-            for (ItemCarrinho item : carrinho) {
-                if (item.getProdutoId() == p.getId()) {
-
-                    int novaQtd = item.getQuantidade() + qtd;
-
-                    if (novaQtd > p.getQuantidade()) {
-                        new Alert(Alert.AlertType.ERROR, "Estoque insuficiente").show();
-                        return;
-                    }
-
-                    item.setQuantidade(novaQtd);
-                    tableCarrinho.refresh();
-                    gerarQrCodePix();
-                    return;
-                }
-            }
-
-            carrinho.add(new ItemCarrinho(
-                    p.getId(),
-                    p.getNome(),
-                    qtd,
-                    p.getPrecoVenda()
-            ));
+            carrinho.add(new ItemCarrinho(p.getId(), p.getNome(), qtd, p.getPrecoVenda()));
 
             txtProduto.clear();
             txtQuantidade.clear();
-
-            gerarQrCodePix();
 
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, "Erro ao adicionar produto").show();
         }
     }
 
-    // =========================
-    // FINALIZAR VENDA
-    // =========================
     @FXML
     public void finalizarVenda() {
         try {
-            // 1. Validações Básicas
-            if (txtCliente.getText().trim().isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "Informe o cliente").show();
-                return;
-            }
-            if (carrinho.isEmpty()) {
-                new Alert(Alert.AlertType.WARNING, "O carrinho está vazio!").show();
-                return;
-            }
-
-            String formaPagamento = cbPagamento.getValue();
-            if (formaPagamento == null) {
-                new Alert(Alert.AlertType.WARNING, "Selecione uma forma de pagamento!").show();
-                return;
-            }
-
             double totalVenda = calcularTotal();
-            double valorRecebido = 0;
 
-            // 2. Reconhecimento Dinâmico do Valor Pago
-            switch (formaPagamento) {
-                case "DINHEIRO":
-                    if (txtDinheiro.getText().trim().isEmpty()) {
-                        new Alert(Alert.AlertType.WARNING, "Digite o valor entregue pelo cliente!").show();
-                        return;
-                    }
-                    valorRecebido = Double.parseDouble(txtDinheiro.getText().replace(",", "."));
-                    break;
-
-                case "PIX":
-                    if (!pixPago) {
-                        new Alert(Alert.AlertType.WARNING, "Você precisa clicar em 'Confirmar Pix' primeiro!").show();
-                        return;
-                    }
-                    // Tenta ler o valor do campo Pix, se estiver vazio ou for o padrão, usa o total
-                    String valPix = txtPix.getText().trim();
-                    valorRecebido = valPix.isEmpty() ? totalVenda : Double.parseDouble(valPix.replace(",", "."));
-                    break;
-
-                case "CARTAO":
-                    String valCartao = txtCartao.getText().trim();
-                    valorRecebido = valCartao.isEmpty() ? totalVenda : Double.parseDouble(valCartao.replace(",", "."));
-                    break;
+            // aplicar desconto
+            if (!txtDesconto.getText().trim().isEmpty()) {
+                double desconto = Double.parseDouble(txtDesconto.getText().trim().replace(",", "."));
+                if (!validarDesconto(desconto)) return;
+                totalVenda -= totalVenda * desconto / 100;
             }
 
-            // 3. Verificação de Segurança (Valor suficiente?)
-            if (valorRecebido < totalVenda) {
-                new Alert(Alert.AlertType.ERROR, "O valor pago (R$ " + valorRecebido + ") é menor que o total (R$ " + totalVenda + ")!").show();
-                return;
-            }
+            // pegar valores de cada forma de pagamento
+            double valorDinheiro = txtDinheiro.getText().trim().isEmpty() ? 0.0 :
+                    Double.parseDouble(txtDinheiro.getText().trim().replace(",", "."));
+            double valorCartao = txtCartao.getText().trim().isEmpty() ? 0.0 :
+                    Double.parseDouble(txtCartao.getText().trim().replace(",", "."));
+            double valorPix = txtPix.getText().trim().isEmpty() ? 0.0 :
+                    Double.parseDouble(txtPix.getText().trim().replace(",", "."));
 
-            // 4. Cálculo do Troco
+            // somar tudo
+            double valorRecebido = valorDinheiro + valorCartao + valorPix;
             double troco = valorRecebido - totalVenda;
-            lblTroco.setText("Troco: R$ " + String.format("%.2f", troco));
 
-            // 5. Integração com Banco de Dados (DAOs)
-            ClienteDAO clienteDAO = new ClienteDAO();
-            ClienteModel cliente = clienteDAO.buscarPorNome(txtCliente.getText().trim());
+            lblTroco.setText("Troco: R$ " + String.format("%.2f", troco < 0 ? 0 : troco));
 
-            if (cliente == null) {
-                new Alert(Alert.AlertType.ERROR, "Cliente não cadastrado no sistema!").show();
-                return;
-            }
+            // exibir cupom com valores corretos
+            exibirCupom(txtCliente.getText().trim(), totalVenda, valorRecebido, troco);
 
-            // Baixa no Estoque
-            ProdutoDao produtoDao = new ProdutoDao();
-            for (ItemCarrinho item : carrinho) {
-                produtoDao.processarEstoque(item.getProdutoId(), item.getQuantidade(), "SAIDA", usuarioId);
-            }
+            new Alert(Alert.AlertType.INFORMATION, "Venda finalizada com sucesso!").show();
 
-            // Salva a Venda
-            VendaModel venda = new VendaModel();
-            venda.setClienteId(cliente.getId());
-            venda.setTotal(totalVenda);
+            // limpar campos
+            carrinho.clear();
+            txtCliente.clear();
+            txtDinheiro.clear();
+            txtCartao.clear();
+            txtPix.clear();
+            txtDesconto.clear();
+            lblTroco.setText("Troco: R$ 0,00");
 
-            int vendaId = vendaDAO.salvarRetornandoId(venda);
-            vendaDAO.salvarItens(vendaId, carrinho);
-            vendaDAO.salvarPagamento(vendaId, formaPagamento, valorRecebido);
-
-            // 6. Finalização Visual
-            exibirCupom(cliente.getNome(), totalVenda, valorRecebido, troco);
-            limparTelaVenda();
-
-        } catch (NumberFormatException e) {
-            new Alert(Alert.AlertType.ERROR, "Erro: Digite apenas números e pontos nos campos de valor!").show();
         } catch (Exception e) {
-            new Alert(Alert.AlertType.ERROR, "Erro inesperado: " + e.getMessage()).show();
+            new Alert(Alert.AlertType.ERROR, "Erro ao finalizar a venda: " + e.getMessage()).show();
         }
     }
-    // =========================
-    // CANCELAR VENDA (ADICIONADO)
-    // =========================
+
+    
+
+    
+
+    // Método do cupom (adicionado)
+    private void exibirCupom(String cliente, double total, double pago, double troco) {
+        String nomeCliente = cliente.isEmpty() ? "Consumidor Final" : cliente;
+
+        String resumo = "🧾 CUPOM FISCAL\n\n" +
+                "Cliente: " + nomeCliente + "\n" +
+                "Data: " + java.time.LocalDate.now() + "\n\n" +
+                "TOTAL: R$ " + String.format("%.2f", total) + "\n" +
+                "PAGO:  R$ " + String.format("%.2f", pago) + "\n" +
+                "TROCO: R$ " + String.format("%.2f", troco < 0 ? 0 : troco) + "\n\n" +
+                "Obrigado pela preferência!";
+
+        new Alert(Alert.AlertType.INFORMATION, resumo).show();
+    }
+
+    private double calcularTotal() {
+        double total = 0;
+        for (ItemCarrinho item : carrinho) {
+            total += item.getPreco() * item.getQuantidade();
+        }
+        return total;
+    }
+
+    private void atualizarTroco() {
+        try {
+            double total = calcularTotal();
+
+            if (!txtDesconto.getText().trim().isEmpty()) {
+                double desconto = Double.parseDouble(txtDesconto.getText().trim().replace(",", "."));
+                total -= total * desconto / 100;
+            }
+
+            double pago = txtDinheiro.getText().trim().isEmpty() ? 0 :
+                    Double.parseDouble(txtDinheiro.getText().trim().replace(",", "."));
+
+            double troco = pago - total;
+
+            lblTroco.setText("Troco: R$ " + (troco < 0 ? "0.00" : String.format("%.2f", troco)));
+
+        } catch (Exception e) {
+            lblTroco.setText("Troco: R$ 0.00");
+        }
+    }
+
+    private boolean validarDesconto(double desconto) {
+        if (desconto <= 5) return true;
+
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setHeaderText("Desconto acima de 5%");
+        dialog.setContentText("Senha do gerente:");
+        String senha = dialog.showAndWait().orElse("");
+
+        return new UsuarioDAO().validarGerente(senha);
+    }
+
     @FXML
     public void cancelarVenda() {
-
         try {
-
-            if (txtVendaId.getText().isEmpty()) {
+            if (txtVendaId.getText().trim().isEmpty()) {
                 new Alert(Alert.AlertType.WARNING, "Informe o ID da venda").show();
                 return;
             }
 
-            int vendaId = Integer.parseInt(txtVendaId.getText());
-
+            int vendaId = Integer.parseInt(txtVendaId.getText().trim());
             String status = vendaDAO.buscarStatus(vendaId);
 
             if (status == null) {
@@ -301,7 +263,6 @@ public class VendaController {
 
             TextInputDialog dialog = new TextInputDialog();
             dialog.setHeaderText("Motivo do cancelamento:");
-
             String motivo = dialog.showAndWait().orElse("");
 
             if (motivo.trim().isEmpty()) {
@@ -310,109 +271,11 @@ public class VendaController {
             }
 
             vendaDAO.cancelarVenda(vendaId, motivo);
-
             new Alert(Alert.AlertType.INFORMATION, "Venda cancelada com sucesso!").show();
-
             txtVendaId.clear();
 
-        } catch (NumberFormatException e) {
-            new Alert(Alert.AlertType.ERROR, "ID inválido").show();
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
         }
-    }
-
-    // =========================
-    // AUXILIARES
-    // =========================
- // =========================
- // GERAR PAYLOAD PIX CORRIGIDO
- // =========================
-    private String gerarPayloadPix(String chave, String valor) {
-        // 1. Configurações Iniciais
-        String nome = "ELETROTECH"; // Sem espaços ou acentos
-        String cidade = "ARAGUAINA"; 
-
-        // 2. Montagem do Campo 26 (Merchant Account Information)
-        // O campo 26 é: 00(GUI) + 01(Chave)
-        String gui = "0014BR.GOV.BCB.PIX";
-        String campoChave = "01" + String.format("%02d", chave.length()) + chave;
-        String campo26Conteudo = gui + campoChave;
-        String campo26 = "26" + String.format("%02d", campo26Conteudo.length()) + campo26Conteudo;
-
-        // 3. Montagem do Campo 54 (Valor) - CUIDADO AQUI
-        // O valor não pode ter espaços
-        String campo54 = "54" + String.format("%02d", valor.length()) + valor;
-
-        // 4. Montagem do Campo 62 (Additional Data Field)
-        // Muitos bancos falham se o campo 62 não tiver o subcampo 05 (Reference Label)
-        String subCampo62 = "0503***"; 
-        String campo62 = "62" + String.format("%02d", subCampo62.length()) + subCampo62;
-
-        // 5. Montagem Final (A ordem das tags importa!)
-        StringBuilder payload = new StringBuilder();
-        payload.append("000201");                                      // Payload Format Indicator
-        payload.append(campo26);                                         // Merchant Account Information
-        payload.append("52040000");                                     // Merchant Category Code
-        payload.append("5303986");                                      // Transaction Currency (986 = Real)
-        payload.append(campo54);                                         // Transaction Amount
-        payload.append("5802BR");                                       // Country Code
-        payload.append("59").append(String.format("%02d", nome.length())).append(nome);     // Nome
-        payload.append("60").append(String.format("%02d", cidade.length())).append(cidade); // Cidade
-        payload.append(campo62);                                         // Transaction ID
-        payload.append("6304");                                         // CRC Placeholder
-
-        String resultado = payload.toString();
-        return resultado + calcularCRC16(resultado);
-    }
-    
-    
-
-    private String calcularCRC16(String payload) {
-
-        int crc = 0xFFFF;
-
-        for (int i = 0; i < payload.length(); i++) {
-            crc ^= payload.charAt(i) << 8;
-
-            for (int j = 0; j < 8; j++) {
-                if ((crc & 0x8000) != 0) {
-                    crc = (crc << 1) ^ 0x1021;
-                } else {
-                    crc <<= 1;
-                }
-            }
-        }
-
-        crc &= 0xFFFF;
-
-        return String.format("%04X", crc);
-    }
-
-    private void exibirCupom(String cliente, double total, double pago, double troco) {
-
-        String resumo = "🧾 CUPOM\n\nCliente: " + cliente +
-                "\nTOTAL: R$ " + String.format("%.2f", total) +
-                "\nPAGO: R$ " + String.format("%.2f", pago) +
-                "\nTROCO: R$ " + String.format("%.2f", troco);
-
-        new Alert(Alert.AlertType.INFORMATION, resumo).show();
-    }
-
-    private void limparTelaVenda() {
-        carrinho.clear();
-        txtCliente.clear();
-        txtPix.clear();
-        lblTroco.setText("Troco: R$ 0.00");
-        imgPix.setImage(null);
-        pixPago = false;
-    }
-
-    private double calcularTotal() {
-        double total = 0;
-        for (ItemCarrinho item : carrinho) {
-            total += item.getPreco() * item.getQuantidade();
-        }
-        return total;
     }
 }

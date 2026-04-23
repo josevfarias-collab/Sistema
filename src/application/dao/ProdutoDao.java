@@ -14,8 +14,8 @@ public class ProdutoDao {
         List<ProdutoModel> lista = new ArrayList<>();
 
         String sql = (valor == null || valor.isEmpty())
-                ? "SELECT * FROM produto"
-                : "SELECT * FROM produto WHERE nome LIKE ? OR codigo_barras LIKE ?";
+                ? "SELECT * FROM produto WHERE ativo = true"
+                : "SELECT * FROM produto WHERE ativo = true AND (nome LIKE ? OR codigo_barras LIKE ?)";
 
         try (Connection conn = Conexao.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -119,7 +119,8 @@ public class ProdutoDao {
     public void excluir(int id) {
 
         try (Connection conn = Conexao.getConnection();
-             PreparedStatement ps = conn.prepareStatement("DELETE FROM produto WHERE id=?")) {
+             PreparedStatement ps = conn.prepareStatement(
+                     "UPDATE produto SET ativo = false WHERE id=?")) {
 
             ps.setInt(1, id);
             ps.executeUpdate();

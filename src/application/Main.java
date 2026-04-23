@@ -8,7 +8,8 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    @Override
+    @SuppressWarnings("exports")
+	@Override
     public void start(Stage primaryStage) {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/application/view/login.fxml"));

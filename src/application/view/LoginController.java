@@ -47,17 +47,17 @@ public class LoginController {
 
             Parent root = loader.load();
 
+            // 🔥 PEGA O CONTROLLER E MOSTRA MENSAGEM
+            SistemaController controller = loader.getController();
+            controller.mostrarMensagemBoasVindas();
+
+            // 🔥 NOVA JANELA
             Stage stage = new Stage();
 
-            // 🔥 CRIA CENA
             Scene scene = new Scene(root);
 
-            // 🔥 TAMANHO GRANDE
             stage.setWidth(1200);
             stage.setHeight(700);
-
-            // 🔥 (OPCIONAL - MELHOR) TELA CHEIA
-            // stage.setMaximized(true);
 
             stage.setScene(scene);
             stage.setTitle("Sistema");
