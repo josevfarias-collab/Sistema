@@ -2,7 +2,6 @@ package application.view;
 
 import application.dao.UsuarioDAO;
 import application.model.UsuarioModel;
-import application.util.UsuarioSessao;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -11,6 +10,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+//Deve estar assim em todos:
+import application.util.Sessao;
 
 public class LoginController {
 
@@ -39,19 +40,19 @@ public class LoginController {
         }
 
         try {
-            // 🔥 SALVA USUÁRIO
-            UsuarioSessao.setUsuario(usuario);
+            // 🔥 SALVA USUÁRIO (Identifica se é Gerente, Vendedor ou Estoquista)
+            Sessao.setUsuario(usuario);
 
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/application/view/sistema.fxml"));
 
             Parent root = loader.load();
 
-            // 🔥 PEGA O CONTROLLER E MOSTRA MENSAGEM
+            // 🔥 PEGA O CONTROLLER E MOSTRA MENSAGEM (Sua lógica original de boas-vindas)
             SistemaController controller = loader.getController();
             controller.mostrarMensagemBoasVindas();
 
-            // 🔥 NOVA JANELA
+            // 🔥 NOVA JANELA (Mantendo suas dimensões 1200x700)
             Stage stage = new Stage();
 
             Scene scene = new Scene(root);

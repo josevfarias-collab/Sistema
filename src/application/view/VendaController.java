@@ -8,9 +8,10 @@ import application.dao.ProdutoDao;
 import application.dao.UsuarioDAO;
 import application.dao.VendaDAO;
 import application.model.VendaModel;
+import application.util.Sessao;
 import application.model.ItemCarrinho;
 import application.model.ProdutoModel;
-
+import application.model.UsuarioModel;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -18,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+
 
 public class VendaController {
 
@@ -40,8 +42,8 @@ public class VendaController {
 
     @FXML
     public void initialize() {
+        // --- VINCULAÇÃO DA TABELA ---
         tableCarrinho.setItems(carrinho);
-
         colNome.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNome()));
         colQtd.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getQuantidade()));
         colPreco.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getPreco()));
@@ -50,29 +52,42 @@ public class VendaController {
 
         cbPagamento.setOnAction(e -> {
             String tipo = cbPagamento.getValue();
-            boxDinheiro.setVisible(false);
-            boxCartao.setVisible(false);
-            boxPix.setVisible(false);
-
             if (tipo == null) return;
-
+            
+            // Alterado para não esconder os outros, permitindo pagamento misto
             switch (tipo) {
-                case "DINHEIRO":
-                    boxDinheiro.setVisible(true);
-                    break;
-                case "CARTAO":
-                    boxCartao.setVisible(true);
-                    break;
-                case "PIX":
-                    boxPix.setVisible(true);
-                    gerarQrCodePix();
-                    break;
+                case "DINHEIRO": boxDinheiro.setVisible(true); break;
+                case "CARTAO": boxCartao.setVisible(true); break;
+                case "PIX": boxPix.setVisible(true); gerarQrCodePix(); break;
             }
         });
 
-        // Atualizar troco em tempo real
+        // Ouvintes para atualizar o troco em tempo real com qualquer campo
         txtDinheiro.textProperty().addListener((obs, oldVal, newVal) -> atualizarTroco());
+        txtCartao.textProperty().addListener((obs, oldVal, newVal) -> atualizarTroco());
+        txtPix.textProperty().addListener((obs, oldVal, newVal) -> atualizarTroco());
         txtDesconto.textProperty().addListener((obs, oldVal, newVal) -> atualizarTroco());
+
+        aplicarRestricoesDeCargo();
+    }
+
+    private void aplicarRestricoesDeCargo() {
+        UsuarioModel logado = Sessao.getUsuario();
+        if (logado != null) {
+            String cargo = logado.getTipo().toUpperCase();
+            if (cargo.equals("ESTOQUISTA")) {
+                cbPagamento.setDisable(true);
+                txtDinheiro.setEditable(false);
+                txtDesconto.setEditable(false);
+                System.out.println("Acesso limitado: Estoquista detectado.");
+            } 
+            else if (cargo.equals("VENDEDOR")) {
+                System.out.println("Acesso: Vendedor detectado.");
+            } 
+            else if (cargo.equals("GERENTE")) {
+                System.out.println("Acesso total: Gerente detectado.");
+            }
+        }
     }
 
     private void gerarQrCodePix() {
@@ -126,10 +141,15 @@ public class VendaController {
                 return;
             }
 
+            // Adiciona ao carrinho
             carrinho.add(new ItemCarrinho(p.getId(), p.getNome(), qtd, p.getPrecoVenda()));
+            
+            // 🔥 FORÇA A TABELA A MOSTRAR O PRODUTO IMEDIATAMENTE
+            tableCarrinho.refresh();
 
             txtProduto.clear();
             txtQuantidade.clear();
+            atualizarTroco();
 
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, "Erro ao adicionar produto").show();
@@ -141,14 +161,12 @@ public class VendaController {
         try {
             double totalVenda = calcularTotal();
 
-            // aplicar desconto
             if (!txtDesconto.getText().trim().isEmpty()) {
                 double desconto = Double.parseDouble(txtDesconto.getText().trim().replace(",", "."));
                 if (!validarDesconto(desconto)) return;
                 totalVenda -= totalVenda * desconto / 100;
             }
 
-            // pegar valores de cada forma de pagamento
             double valorDinheiro = txtDinheiro.getText().trim().isEmpty() ? 0.0 :
                     Double.parseDouble(txtDinheiro.getText().trim().replace(",", "."));
             double valorCartao = txtCartao.getText().trim().isEmpty() ? 0.0 :
@@ -156,18 +174,20 @@ public class VendaController {
             double valorPix = txtPix.getText().trim().isEmpty() ? 0.0 :
                     Double.parseDouble(txtPix.getText().trim().replace(",", "."));
 
-            // somar tudo
             double valorRecebido = valorDinheiro + valorCartao + valorPix;
+            
+            if (valorRecebido < totalVenda) {
+                new Alert(Alert.AlertType.WARNING, "Valor insuficiente!").show();
+                return;
+            }
+
             double troco = valorRecebido - totalVenda;
+            lblTroco.setText("Troco: R$ " + String.format("%.2f", troco));
 
-            lblTroco.setText("Troco: R$ " + String.format("%.2f", troco < 0 ? 0 : troco));
-
-            // exibir cupom com valores corretos
             exibirCupom(txtCliente.getText().trim(), totalVenda, valorRecebido, troco);
 
             new Alert(Alert.AlertType.INFORMATION, "Venda finalizada com sucesso!").show();
 
-            // limpar campos
             carrinho.clear();
             txtCliente.clear();
             txtDinheiro.clear();
@@ -175,29 +195,78 @@ public class VendaController {
             txtPix.clear();
             txtDesconto.clear();
             lblTroco.setText("Troco: R$ 0,00");
+            
+            boxDinheiro.setVisible(false);
+            boxCartao.setVisible(false);
+            boxPix.setVisible(false);
 
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, "Erro ao finalizar a venda: " + e.getMessage()).show();
         }
     }
 
-    
-
-    
-
-    // Método do cupom (adicionado)
     private void exibirCupom(String cliente, double total, double pago, double troco) {
-        String nomeCliente = cliente.isEmpty() ? "Consumidor Final" : cliente;
+        String nomeCliente = cliente.isEmpty() ? "CONSUMIDOR FINAL" : cliente.toUpperCase();
+        String dataVenda = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                            .format(java.time.LocalDateTime.now());
 
-        String resumo = "🧾 CUPOM FISCAL\n\n" +
-                "Cliente: " + nomeCliente + "\n" +
-                "Data: " + java.time.LocalDate.now() + "\n\n" +
-                "TOTAL: R$ " + String.format("%.2f", total) + "\n" +
-                "PAGO:  R$ " + String.format("%.2f", pago) + "\n" +
-                "TROCO: R$ " + String.format("%.2f", troco < 0 ? 0 : troco) + "\n\n" +
-                "Obrigado pela preferência!";
+        StringBuilder sb = new StringBuilder();
+        sb.append("==========================================\n");
+        sb.append("           NOSSA LOJA EXCELSIOR           \n");
+        sb.append("       Rua do Sucesso, 777 - Centro       \n");
+        sb.append("==========================================\n");
+        sb.append(String.format("DATA/HORA: %s\n", dataVenda));
+        sb.append(String.format("CLIENTE:   %s\n", nomeCliente));
+        sb.append("------------------------------------------\n");
+        sb.append(String.format("%-20s %-5s %-12s\n", "ITEM", "QTD", "VALOR"));
+        
+        for (ItemCarrinho item : carrinho) {
+            String nomeProd = item.getNome().length() > 18 ? item.getNome().substring(0, 18) : item.getNome();
+            sb.append(String.format("%-20s %-5d R$ %-10.2f\n", 
+                    nomeProd, item.getQuantidade(), (item.getPreco() * item.getQuantidade())));
+        }
+        
+        sb.append("------------------------------------------\n");
+        // As cores nós vamos aplicar via CSS na Label, aqui mantemos o texto alinhado
+        sb.append(String.format("TOTAL DA VENDA:             R$ %10.2f\n", total));
+        sb.append(String.format("VALOR RECEBIDO:            R$ %10.2f\n", pago));
+        sb.append("------------------------------------------\n");
+        sb.append(String.format("TROCO:                     R$ %10.2f\n", troco < 0 ? 0 : troco));
+        sb.append("==========================================\n");
+        sb.append("        OBRIGADO E VOLTE SEMPRE!          \n");
+        sb.append("==========================================\n");
 
-        new Alert(Alert.AlertType.INFORMATION, resumo).show();
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Recibo de Venda");
+        alert.setHeaderText(null);
+        alert.setGraphic(null); 
+
+        Label label = new Label(sb.toString());
+        
+        // CSS PARA DEIXAR BONITO:
+        // 1. Background que lembra papel antigo (#feffdf)
+        // 2. Borda tracejada lateral
+        // 3. Fonte monoespaçada preta
+        label.setStyle(
+            "-fx-font-family: 'Consolas'; " +
+            "-fx-font-size: 14; " +
+            "-fx-text-fill: #2e2e2e; " +
+            "-fx-background-color: #ffffff; " + 
+            "-fx-padding: 20; " +
+            "-fx-border-color: #cccccc; " +
+            "-fx-border-style: dashed; " +
+            "-fx-border-width: 2; " +
+            "-fx-alignment: center;"
+        );
+
+        // Ajuste para centralizar o cupom na janela do Alerta
+        VBox container = new VBox(label);
+        container.setStyle("-fx-alignment: center; -fx-padding: 10; -fx-background-color: #eeeeee;");
+        
+        alert.getDialogPane().setContent(container);
+        
+        // Remove o texto padrão "OK" e deixa a janela mais limpa
+        alert.showAndWait();
     }
 
     private double calcularTotal() {
@@ -217,10 +286,12 @@ public class VendaController {
                 total -= total * desconto / 100;
             }
 
-            double pago = txtDinheiro.getText().trim().isEmpty() ? 0 :
-                    Double.parseDouble(txtDinheiro.getText().trim().replace(",", "."));
+            double pDinheiro = txtDinheiro.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtDinheiro.getText().trim().replace(",", "."));
+            double pCartao = txtCartao.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtCartao.getText().trim().replace(",", "."));
+            double pPix = txtPix.getText().trim().isEmpty() ? 0 : Double.parseDouble(txtPix.getText().trim().replace(",", "."));
 
-            double troco = pago - total;
+            double totalPago = pDinheiro + pCartao + pPix;
+            double troco = totalPago - total;
 
             lblTroco.setText("Troco: R$ " + (troco < 0 ? "0.00" : String.format("%.2f", troco)));
 
@@ -231,12 +302,10 @@ public class VendaController {
 
     private boolean validarDesconto(double desconto) {
         if (desconto <= 5) return true;
-
         TextInputDialog dialog = new TextInputDialog();
         dialog.setHeaderText("Desconto acima de 5%");
         dialog.setContentText("Senha do gerente:");
         String senha = dialog.showAndWait().orElse("");
-
         return new UsuarioDAO().validarGerente(senha);
     }
 
@@ -247,33 +316,26 @@ public class VendaController {
                 new Alert(Alert.AlertType.WARNING, "Informe o ID da venda").show();
                 return;
             }
-
             int vendaId = Integer.parseInt(txtVendaId.getText().trim());
             String status = vendaDAO.buscarStatus(vendaId);
-
             if (status == null) {
                 new Alert(Alert.AlertType.ERROR, "Venda não encontrada").show();
                 return;
             }
-
             if ("CANCELADA".equals(status)) {
                 new Alert(Alert.AlertType.WARNING, "Venda já cancelada").show();
                 return;
             }
-
             TextInputDialog dialog = new TextInputDialog();
             dialog.setHeaderText("Motivo do cancelamento:");
             String motivo = dialog.showAndWait().orElse("");
-
             if (motivo.trim().isEmpty()) {
                 new Alert(Alert.AlertType.WARNING, "Informe o motivo").show();
                 return;
             }
-
             vendaDAO.cancelarVenda(vendaId, motivo);
             new Alert(Alert.AlertType.INFORMATION, "Venda cancelada com sucesso!").show();
             txtVendaId.clear();
-
         } catch (Exception e) {
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
         }

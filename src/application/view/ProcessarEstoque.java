@@ -14,7 +14,7 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import application.model.ProdutoModel;
-import application.util.UsuarioSessao;
+import application.util.Sessao;
 import application.dao.ProdutoDao;
 
 public class ProcessarEstoque implements Initializable {
@@ -124,8 +124,8 @@ public class ProcessarEstoque implements Initializable {
             ProdutoDao dao = new ProdutoDao();
 
             int usuarioId = 0;
-            if (UsuarioSessao.getUsuario() != null) {
-                usuarioId = UsuarioSessao.getUsuario().getId();
+            if (Sessao.getUsuario() != null) {
+                usuarioId = Sessao.getUsuario().getId();
             }
 
             dao.processarEstoque(produto.getId(), qtd, operacao, usuarioId);

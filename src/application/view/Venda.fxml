@@ -5,37 +5,29 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefWidth="900" prefHeight="600"
+<AnchorPane prefWidth="900" prefHeight="650"
             style="-fx-background-color: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="application.view.VendaController">
 
     <children>
-
-        <VBox spacing="12" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10"
+        <VBox spacing="10" AnchorPane.topAnchor="10" AnchorPane.leftAnchor="10"
               AnchorPane.rightAnchor="10" AnchorPane.bottomAnchor="10">
 
-            <!-- TÍTULO -->
             <Label text="💰 VENDAS (PDV)" style="-fx-text-fill:white;">
-                <font>
-                    <Font size="22"/>
-                </font>
+                <font><Font name="System Bold" size="22"/></font>
             </Label>
 
-            <!-- CLIENTE -->
             <TextField fx:id="txtCliente" promptText="Nome do cliente"/>
 
-            <!-- PRODUTO -->
             <HBox spacing="10">
                 <TextField fx:id="txtProduto" promptText="Produto" HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="txtQuantidade" promptText="Qtd" prefWidth="80"/>
-                <Button text="➕ Adicionar" onAction="#adicionarProduto"
-                        style="-fx-background-color:#2196F3; -fx-text-fill:white;"/>
+                <Button text="➕ Adicionar" onAction="#adicionarProduto" style="-fx-background-color:#2196F3; -fx-text-fill:white;"/>
             </HBox>
 
-            <!-- CARRINHO -->
-            <TableView fx:id="tableCarrinho" VBox.vgrow="ALWAYS">
+            <TableView fx:id="tableCarrinho" VBox.vgrow="ALWAYS" prefHeight="200">
                 <columns>
                     <TableColumn fx:id="colNome" text="Produto" prefWidth="400"/>
                     <TableColumn fx:id="colQtd" text="Qtd" prefWidth="100"/>
@@ -43,57 +35,42 @@
                 </columns>
             </TableView>
 
-            <!-- DESCONTO + PAGAMENTO -->
             <HBox spacing="10">
                 <TextField fx:id="txtDesconto" promptText="Desconto %" prefWidth="120"/>
                 <ComboBox fx:id="cbPagamento" promptText="Forma de pagamento" prefWidth="200"/>
             </HBox>
 
-            <!-- PAGAMENTO DINÂMICO -->
-            <StackPane>
-
-                <!-- DINHEIRO -->
-                <VBox fx:id="boxDinheiro">
+            <VBox spacing="8">
+                <VBox fx:id="boxDinheiro" visible="false" spacing="5">
+                    <Label text="Dinheiro:" style="-fx-text-fill: white;"/>
                     <TextField fx:id="txtDinheiro" promptText="Valor em dinheiro"/>
                 </VBox>
 
-                <!-- CARTÃO -->
-                <VBox fx:id="boxCartao" spacing="5" visible="false">
+                <VBox fx:id="boxCartao" visible="false" spacing="5" style="-fx-background-color: rgba(255,255,255,0.05); -fx-padding: 5;">
+                    <Label text="Cartão:" style="-fx-text-fill: white;"/>
                     <TextField fx:id="txtCartao" promptText="Valor no cartão"/>
-                    <TextField fx:id="txtNumeroCartao" promptText="Número do cartão"/>
-                    <TextField fx:id="txtNomeCartao" promptText="Nome no cartão"/>
-                    <TextField fx:id="txtValidade" promptText="Validade"/>
-                    <TextField fx:id="txtCVV" promptText="CVV"/>
+                    <HBox spacing="5">
+                        <TextField fx:id="txtNumeroCartao" promptText="Número do cartão" HBox.hgrow="ALWAYS"/>
+                        <TextField fx:id="txtCVV" promptText="CVV" prefWidth="60"/>
+                    </HBox>
                 </VBox>
 
-                <!-- PIX -->
-                <VBox fx:id="boxPix" spacing="5" visible="false">
-                    <TextField fx:id="txtPix" promptText="Valor no Pix"/>
-                    <ImageView fx:id="imgPix" fitHeight="120" fitWidth="120"/>
+                <VBox fx:id="boxPix" visible="false" spacing="5" style="-fx-background-color: rgba(255,255,255,0.05); -fx-padding: 5;">
+                    <Label text="Pix:" style="-fx-text-fill: white;"/>
+                    <TextField fx:id="txtPix" promptText="Valor no Pix" editable="false"/>
+                    <ImageView fx:id="imgPix" fitHeight="150" fitWidth="150" preserveRatio="true" />
                 </VBox>
+            </VBox>
 
-            </StackPane>
+            <Label fx:id="lblTroco" text="Troco: R$ 0.00" style="-fx-text-fill:white; -fx-font-size: 18; -fx-font-weight: bold;"/>
 
-            <!-- TROCO -->
-            <Label fx:id="lblTroco" text="Troco: R$ 0.00" style="-fx-text-fill:white;"/>
-
-            <!-- BOTÕES -->
-            <HBox spacing="10">
-
-                <Button text="💾 Finalizar Venda" onAction="#finalizarVenda"
-                        style="-fx-background-color:#4CAF50; -fx-text-fill:white;"/>
-
-                <Button text="✔ Confirmar Pix" onAction="#confirmarPix"
-                        style="-fx-background-color:#00C853; -fx-text-fill:white;"/>
-
-                <TextField fx:id="txtVendaId" promptText="ID da venda" prefWidth="120"/>
-
-                <Button text="❌ Cancelar" onAction="#cancelarVenda"
-                        style="-fx-background-color:#f44336; -fx-text-fill:white;"/>
-
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button text="💾 Finalizar Venda" onAction="#finalizarVenda" style="-fx-background-color:#4CAF50; -fx-text-fill:white; -fx-font-weight: bold;"/>
+                <Button text="✔ Confirmar Pix" onAction="#confirmarPix" style="-fx-background-color:#00C853; -fx-text-fill:white;"/>
+                <Region HBox.hgrow="ALWAYS" />
+                <TextField fx:id="txtVendaId" promptText="ID" prefWidth="80"/>
+                <Button text="❌ Cancelar" onAction="#cancelarVenda" style="-fx-background-color:#f44336; -fx-text-fill:white;"/>
             </HBox>
-
         </VBox>
-
     </children>
 </AnchorPane>
